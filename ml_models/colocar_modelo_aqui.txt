@@ -1,0 +1,2 @@
+Coloque el archivo de pesos entrenados 'best_convnext_tiny.pth' en esta carpeta.
+Este archivo será utilizado por InferenceService en la Fase 4.

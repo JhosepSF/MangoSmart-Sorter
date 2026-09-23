@@ -1,0 +1,6 @@
+{
+    "status": "ok",
+    "max_absolute_probability_difference": 0.0,
+    "class_predictions_identical": true,
+    "tolerance_reference": 1e-05
+}

@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Lote {{ codigo_lote }} - MangoSmart-Sorter{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Encabezado del Dashboard -->
+    <div class="row align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+        <div class="col-md-6">
+            <h2 class="text-success mb-1" id="lot-title">Lote: {{ codigo_lote }}</h2>
+            <p class="text-muted mb-0">Supervisión y control del clasificador en tiempo real</p>
+        </div>
+        <div class="col-md-6 text-md-end mt-2 mt-md-0">
+            <!-- Botones de Control General -->
+            <button id="btn-pause" class="btn btn-outline-warning me-2 fw-semibold">⏸️ Pausar Cinta</button>
+            <button id="btn-resume" class="btn btn-outline-success me-2 fw-semibold d-none">▶️ Reanudar Cinta</button>
+            <button id="btn-emergency" class="btn btn-emergency fw-bold">🚨 Parada de Emergencia</button>
+        </div>
+    </div>
+
+    <!-- Banner de Alerta / Estado de Conexión -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div id="connection-alerts" class="alert alert-warning d-none border-0 shadow-sm" role="alert">
+                <!-- Se inyectan alertas de desconexión aquí -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicadores de Conexión y Estado (Fila 1) -->
+    <div class="row g-4 mb-4">
+        <!-- Conexiones -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-soft p-3 h-100">
+                <h6 class="text-secondary mb-3">📡 Estado de Conexión</h6>
+                <div class="d-flex flex-column g-2">
+                    <div class="d-flex justify-between align-items-center mb-2">
+                        <span>Servidor Daphne:</span>
+                        <div>
+                            <span class="status-dot status-disconnected" id="conn-server"></span>
+                            <span class="ms-1 fw-bold" id="conn-server-text">Offline</span>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-between align-items-center mb-2">
+                        <span>Celular de Captura:</span>
+                        <div>
+                            <span class="status-dot status-disconnected" id="conn-mobile"></span>
+                            <span class="ms-1 fw-bold" id="conn-mobile-text">Offline</span>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-between align-items-center">
+                        <span>Arduino USB:</span>
+                        <div>
+                            <span class="status-dot status-disconnected" id="conn-arduino"></span>
+                            <span class="ms-1 fw-bold" id="conn-arduino-text">Offline</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conexión del Celular (Enlace y QR) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-soft p-3 h-100">
+                <h6 class="text-secondary mb-2">📱 Enlace Celular de Captura</h6>
+                <div class="mb-2">
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" id="input-base-url" placeholder="https://xxxx.ngrok-free.dev" title="Introduce el enlace base de tu ngrok o IP local">
+                        <button class="btn btn-success" id="btn-save-url" type="button" title="Guardar URL y generar QR">💾</button>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mt-1">
+                    <div id="qr-container" class="bg-white p-1 border rounded" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                        <img id="qr-image" src="" alt="QR" style="max-width: 100%; max-height: 100%;" class="d-none">
+                        <span id="qr-placeholder" class="text-muted small text-center" style="font-size: 10px;">Pon URL y guarda</span>
+                    </div>
+                    <div class="ms-2 flex-grow-1" style="max-width: 140px; overflow: hidden;">
+                        <span class="small text-muted d-block">Escanear QR o ir a:</span>
+                        <a href="#" id="link-camera-view" target="_blank" class="small text-success fw-bold text-decoration-none d-block text-truncate">Esperando URL...</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contadores (Maduros, Inmaduros, Revisión) -->
+        <div class="col-xl-4 col-md-12">
+            <div class="card card-soft p-3 h-100">
+                <h6 class="text-secondary mb-3">📊 Métricas del Lote</h6>
+                <div class="row text-center g-2">
+                    <div class="col-3">
+                        <div class="p-1 bg-success bg-opacity-10 rounded">
+                            <h4 class="text-success fw-bold mb-0" id="count-mature">0</h4>
+                            <span class="text-muted small" style="font-size: 10px;">Maduros</span>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-1 bg-info bg-opacity-10 rounded">
+                            <h4 class="text-info fw-bold mb-0" id="count-immature">0</h4>
+                            <span class="text-muted small" style="font-size: 10px;">Inmaduros</span>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-1 bg-secondary bg-opacity-10 rounded">
+                            <h4 class="text-secondary fw-bold mb-0" id="count-review">0</h4>
+                            <span class="text-muted small" style="font-size: 10px;">Revisión</span>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-1 bg-dark bg-opacity-10 rounded">
+                            <h4 class="text-dark fw-bold mb-0" id="count-total">0</h4>
+                            <span class="text-muted small" style="font-size: 10px;">Total</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado de la Cinta y Compuerta -->
+        <div class="col-xl-2 col-md-6">
+            <div class="card card-soft p-3 h-100">
+                <h6 class="text-secondary mb-3">⚙️ Actuadores</h6>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small">Cinta:</span>
+                    <span class="badge bg-success" id="status-conveyor">Activa</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small">Compuerta:</span>
+                    <span class="badge bg-secondary" id="status-gate">NEUTRAL</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Cuerpo Principal (Fila 2) -->
+    <div class="row g-4 mb-4">
+        <!-- Columna Izquierda: Última Clasificación en Detalle -->
+        <div class="col-lg-6">
+            <div class="card card-soft p-4 h-100">
+                <h5 class="text-success mb-4">📸 Último Mango Clasificado</h5>
+                
+                <div class="row g-3">
+                    <!-- Imagen de la Captura -->
+                    <div class="col-sm-6 text-center">
+                        <div class="border rounded bg-dark d-flex justify-content-center align-items-center" style="aspect-ratio: 4/3; overflow: hidden;">
+                            <img id="last-image" src="" alt="Última captura" class="img-fluid d-none">
+                            <div id="image-placeholder" class="text-white-50 p-4">
+                                <span>Esperando captura...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Detalles del Modelo -->
+                    <div class="col-sm-6">
+                        <h6 class="text-secondary border-bottom pb-2">Resultado Inferencia</h6>
+                        
+                        <div class="mb-2">
+                            <span class="text-muted">Secuencia:</span>
+                            <strong id="inference-seq" class="float-end">-</strong>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted">Clase:</span>
+                            <span id="inference-class" class="badge bg-secondary float-end">-</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted">Confianza:</span>
+                            <strong id="inference-conf" class="float-end">-</strong>
+                        </div>
+                        <div class="mb-3">
+                            <span class="text-muted">Probabilidades:</span>
+                            <div class="progress mt-1" style="height: 10px;">
+                                <div id="prob-bar-mature" class="progress-bar bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-between small text-muted mt-1">
+                                <span>Inmaduro</span>
+                                <span class="ms-auto">Maduro</span>
+                            </div>
+                        </div>
+                        <div class="mb-1 text-muted small">
+                            <span>Preprocesamiento:</span>
+                            <span id="time-preprocess" class="float-end">- ms</span>
+                        </div>
+                        <div class="mb-1 text-muted small">
+                            <span>Inferencia ML:</span>
+                            <span id="time-inference" class="float-end">- ms</span>
+                        </div>
+                        <div class="text-muted small">
+                            <span>Latencia Total:</span>
+                            <span id="time-total" class="float-end">- ms</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Controles de Calibración / Test Manual -->
+        <div class="col-lg-6">
+            <div class="card card-soft p-4 h-100">
+                <h5 class="text-success mb-4">🔧 Controles Manuales y Pruebas</h5>
+                
+                <div class="mb-4">
+                    <h6 class="text-secondary mb-3">1. Simular Eventos y Captura</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button id="btn-manual-capture" class="btn btn-success fw-semibold">📸 Solicitar Captura Manual</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <h6 class="text-secondary mb-3">2. Posiciones de Servomotor (Compuerta)</h6>
+                    <p class="text-muted small">Envía comandos directos al Arduino para probar y calibrar los ángulos de desviación de la compuerta.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button id="btn-servo-mature" class="btn btn-outline-warning fw-semibold">Servo Maduro</button>
+                        <button id="btn-servo-immature" class="btn btn-outline-info fw-semibold">Servo Inmaduro</button>
+                        <button id="btn-servo-neutral" class="btn btn-outline-secondary fw-semibold">Servo Neutral</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial Reciente (Fila 3) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-soft p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-success mb-0">📋 Últimas 5 Clasificaciones</h5>
+                    <a href="/history/{{ codigo_lote }}/" class="btn btn-sm btn-outline-success">Ver Historial Completo</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-soft">
+                        <thead>
+                            <tr>
+                                <th>Secuencia</th>
+                                <th>Fecha y Hora</th>
+                                <th>Clase Predicha</th>
+                                <th>Confianza</th>
+                                <th>Prob. Maduro</th>
+                                <th>Inferencia (ms)</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- Inyectado dinámicamente -->
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No hay clasificaciones en este lote aún.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/websocket.js' %}"></script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+<script>
+    const lotCode = "{{ codigo_lote }}";
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar el controlador del Dashboard
+        initDashboard(lotCode);
+    });
+</script>
+{% endblock %}

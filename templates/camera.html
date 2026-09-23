@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cámara Móvil Lote {{ codigo_lote }} - MangoSmart-Sorter{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <!-- Encabezado de Cámara Móvil -->
+    <div class="card card-soft p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="text-success mb-1">📸 Estación de Captura</h4>
+                <p class="text-muted small mb-0">Lote: <strong class="text-dark">{{ codigo_lote }}</strong></p>
+            </div>
+            <div>
+                <span class="status-dot status-disconnected" id="conn-server"></span>
+                <span class="small fw-semibold ms-1" id="conn-server-text">Offline</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Advertencias / Permisos -->
+    <div id="camera-alert" class="alert alert-warning d-none" role="alert">
+        <!-- Errores e indicaciones de cámara se pintan aquí -->
+    </div>
+
+    <!-- Contenedor del Stream de Cámara -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <div class="camera-box mx-auto shadow-sm" style="max-width: 480px;">
+                <!-- Video Stream -->
+                <video id="camera-stream" autoplay playsinline class="w-100 h-100" style="object-fit: cover;"></video>
+                <!-- Guía de Enfoque -->
+                <div class="camera-guide-box"></div>
+                <div class="camera-guide-text">Centra el mango aquí</div>
+                <!-- Indicador de Solicitud de Captura del Servidor -->
+                <div id="capture-indicator" class="position-absolute w-100 h-100 bg-warning bg-opacity-75 d-none flex-column justify-content-center align-items-center" style="top: 0; left: 0;">
+                    <div class="spinner-border text-white mb-2" role="status"></div>
+                    <span class="text-white fw-bold fs-5">¡CAPTURANDO FOTO!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles de Cámara -->
+    <div class="row g-2 mb-4 justify-content-center" style="max-width: 480px; margin: 0 auto;">
+        <div class="col-6">
+            <button id="btn-start-camera" class="btn btn-success w-100 py-2 fw-semibold">🔄 Iniciar Cámara</button>
+        </div>
+        <div class="col-6">
+            <button id="btn-manual-shot" class="btn btn-outline-success w-100 py-2 fw-semibold" disabled>📸 Capturar Foto</button>
+        </div>
+    </div>
+
+    <!-- Canvas Escondido para Extraer el Fotograma -->
+    <canvas id="photo-canvas" class="d-none" width="640" height="480"></canvas>
+
+    <!-- Vista Previa de la Última Clasificación -->
+    <div class="row justify-content-center" style="max-width: 480px; margin: 0 auto;">
+        <div class="col-12">
+            <div class="card card-soft p-3">
+                <h6 class="text-success border-bottom pb-2 mb-3">Último Resultado del Servidor</h6>
+                
+                <div class="d-flex align-items-center g-3">
+                    <div class="border rounded bg-dark d-flex justify-content-center align-items-center me-3" style="width: 100px; height: 75px; overflow: hidden; flex-shrink: 0;">
+                        <img id="last-shot-preview" src="" alt="Capturada" class="img-fluid d-none">
+                        <span id="preview-placeholder" class="text-white-50 small" style="font-size: 0.75rem;">Sin captura</span>
+                    </div>
+                    
+                    <div class="flex-grow-1">
+                        <div class="mb-1">
+                            <span class="text-muted small">Clase:</span>
+                            <span id="result-class" class="badge bg-secondary ms-2">-</span>
+                        </div>
+                        <div>
+                            <span class="text-muted small">Confianza:</span>
+                            <strong id="result-conf" class="ms-2">-</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/websocket.js' %}"></script>
+<script src="{% static 'js/camera.js' %}"></script>
+<script>
+    const lotCode = "{{ codigo_lote }}";
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar la lógica de cámara móvil
+        initCameraStation(lotCode);
+    });
+</script>
+{% endblock %}

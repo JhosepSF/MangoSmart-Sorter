@@ -1,0 +1,63 @@
+{
+    "model_name": "ConvNeXt-Tiny",
+    "framework": "TensorFlow/Keras",
+    "tensorflow_version": "2.20.0",
+    "python_version": "3.12.13",
+    "input_shape": [
+        224,
+        224,
+        3
+    ],
+    "input_dtype_before_preprocessing": "float32",
+    "input_value_range": [
+        0,
+        255
+    ],
+    "include_preprocessing": true,
+    "color_order": "RGB",
+    "preprocessing": "preprocessing included inside ConvNeXtTiny (Normalization layer); RGB input range [0, 255]",
+    "class_names": [
+        "Inmaduros",
+        "Maduros"
+    ],
+    "class_mapping": {
+        "Inmaduros": 0,
+        "Maduros": 1
+    },
+    "positive_class": "Maduros",
+    "classification_threshold": 0.5,
+    "optuna_trials": 30,
+    "selected_epochs": 10,
+    "best_hyperparameters": {
+        "batch_size": 8,
+        "cnn_epochs": 10,
+        "last_n_layers": 20,
+        "dense_units": 256,
+        "dropout_rate": 0.4,
+        "learning_rate": 0.00013850514190883893,
+        "optimizer": "rmsprop",
+        "l2_regularization": 3.8777533746178e-05,
+        "label_smoothing": 0.0
+    },
+    "total_parameters": 28017249,
+    "trainable_parameters": 12085761,
+    "non_trainable_parameters": 15931488,
+    "evaluation_schema": {
+        "primary_probability_metric": "log_loss",
+        "secondary_probability_metrics": [
+            "brier_score",
+            "pr_auc_average_precision",
+            "ece",
+            "calibration_slope",
+            "minimum_correct_class_probability",
+            "minimum_margin_from_threshold"
+        ],
+        "comparison_models": [
+            "ResNet50",
+            "EfficientNetV2-S",
+            "ConvNeXt-Tiny"
+        ]
+    },
+    "onnx_export_enabled": false,
+    "pytorch_pt_note": ".pt no se genera porque el modelo fue entrenado con TensorFlow/Keras, no con PyTorch."
+}

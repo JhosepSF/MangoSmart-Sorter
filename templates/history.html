@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial Lote {{ codigo_lote }} - MangoSmart-Sorter{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Encabezado de Historial -->
+    <div class="row align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+        <div class="col-sm-8">
+            <h2 class="text-success mb-1">📋 Historial de Clasificaciones</h2>
+            <p class="text-muted mb-0">Lote: <strong>{{ codigo_lote }}</strong> | Listado de todos los mangos procesados en esta sesión</p>
+        </div>
+        <div class="col-sm-4 text-sm-end mt-2 mt-sm-0">
+            <a href="/dashboard/{{ codigo_lote }}/" class="btn btn-outline-success">Volver al Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Filtros y estadísticas de lote -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card card-soft p-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-muted me-3">Filtro de Clase:</span>
+                        <select id="class-filter" class="form-select d-inline-block w-auto">
+                            <option value="ALL">Todas las clases</option>
+                            <option value="MADURO">Maduro</option>
+                            <option value="INMADURO">Inmaduro</option>
+                            <option value="REVISION">Revisión</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button id="btn-export-csv" class="btn btn-sm btn-outline-success">📥 Exportar a CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Historial Pagina Completa -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-soft p-4">
+                <div class="table-responsive">
+                    <table class="table table-soft">
+                        <thead>
+                            <tr>
+                                <th>Secuencia</th>
+                                <th>Fotografía</th>
+                                <th>Fecha y Hora</th>
+                                <th>Clase Predicha</th>
+                                <th>Confianza</th>
+                                <th>Prob. Maduro</th>
+                                <th>Prob. Inmaduro</th>
+                                <th>Tiempos (Preproc / Infer / Latencia)</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="full-history-tbody">
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">Cargando historial de clasificaciones...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                <nav aria-label="Navegación de historial" class="mt-4">
+                    <ul class="pagination justify-content-center" id="history-pagination">
+                        <!-- Generado dinámicamente -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const lotCode = "{{ codigo_lote }}";
+    let currentPage = 1;
+    let currentFilter = 'ALL';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadHistory(currentPage, currentFilter);
+
+        document.getElementById('class-filter').addEventListener('change', function(e) {
+            currentFilter = e.target.value;
+            currentPage = 1;
+            loadHistory(currentPage, currentFilter);
+        });
+
+        document.getElementById('btn-export-csv').addEventListener('click', function() {
+            // Generar y descargar un reporte CSV básico
+            alert('Exportación CSV no disponible en modo base sin clasificaciones.');
+        });
+    });
+
+    function loadHistory(page, filter) {
+        // Enlazar con el endpoint de DRF en una fase posterior. Por ahora cargamos la simulación o endpoint básico.
+        fetch(`/api/lots/${lotCode}/statistics/`)
+        .then(res => res.json())
+        .then(data => {
+            // Nota: En la Fase 8 conectaremos la paginación con DRF.
+            // Para la Fase 2, mostramos un listado representativo si la base está vacía o cargamos las reales si existen.
+            renderMockOrRealHistory(filter);
+        })
+        .catch(err => {
+            console.error('Error cargando historial:', err);
+            document.getElementById('full-history-tbody').innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-danger py-4">Error al conectar con el servidor para cargar el historial.</td>
+                </tr>
+            `;
+        });
+    }
+
+    function renderMockOrRealHistory(filter) {
+        const tbody = document.getElementById('full-history-tbody');
+        
+        // Consultar clasificaciones reales desde la base de datos (para cuando existan)
+        fetch(`/api/lots/${lotCode}/`)
+        .then(res => res.json())
+        .then(data => {
+            // Si hay clasificaciones, renderizar de la base de datos
+            // Por ahora, como es la Fase 2 de interfaz inicial, mostramos datos placeholder si no hay registros reales
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">No hay clasificaciones reales registradas para este lote. Se iniciarán al conectar la cámara.</td>
+                </tr>
+            `;
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,5 @@
+{
+    "tflite_float32": "Exportación desactivada por configuración. Ejecutar posteriormente desde SavedModel en un runtime limpio si se requiere despliegue.",
+    "tflite_dynamic_range": "Exportación desactivada por configuración. Ejecutar posteriormente desde SavedModel en un runtime limpio si se requiere despliegue.",
+    "onnx": "Exportación desactivada por configuración para reducir el riesgo de reinicio del kernel."
+}

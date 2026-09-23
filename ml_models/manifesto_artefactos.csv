@@ -1,0 +1,12 @@
+﻿artifact,extension,size_bytes,size_mb
+ConvNeXtTiny_madurez_mango.architecture.json,.json,138413,0.132
+ConvNeXtTiny_madurez_mango.config.json,.json,1826,0.0017
+ConvNeXtTiny_madurez_mango.summary.txt,.txt,2315,0.0022
+ConvNeXtTiny_madurez_mango_final.keras,.keras,160952230,153.496
+ConvNeXtTiny_madurez_mango_final.weights.h5,.h5,160830864,153.3803
+ConvNeXtTiny_saved_model/fingerprint.pb,.pb,97,0.0001
+ConvNeXtTiny_saved_model/saved_model.pb,.pb,1735727,1.6553
+ConvNeXtTiny_saved_model/variables/variables.data-00000-of-00001,.data-00000-of-00001,224187818,213.8022
+ConvNeXtTiny_saved_model/variables/variables.index,.index,21111,0.0201
+errores_exportacion.json,.json,432,0.0004
+verificacion_recarga_modelo.json,.json,145,0.0001

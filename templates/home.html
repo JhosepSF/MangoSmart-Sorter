@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inicio - MangoSmart-Sorter{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <!-- Encabezado / Logo -->
+        <div class="col-md-8 text-center mb-5">
+            <h1 class="display-4 fw-bold text-success">🥭 MangoSmart-Sorter</h1>
+            <p class="lead text-muted">Sistema IoT y de Visión Artificial para Clasificación Automática de Madurez del Mango</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Columna Izquierda: Crear o Seleccionar Lote -->
+        <div class="col-md-6">
+            <div class="card card-soft p-4 h-100">
+                <h3 class="card-title text-success mb-4">📂 Gestión de Lotes</h3>
+                
+                <!-- Formulario Crear Lote -->
+                <form id="create-lot-form" class="mb-5">
+                    {% csrf_token %}
+                    <h5 class="text-secondary mb-3">Crear Nuevo Lote</h5>
+                    <div class="mb-3">
+                        <label for="lot-name" class="form-label">Nombre del Lote</label>
+                        <input type="text" class="form-control" id="lot-name" placeholder="Ej. Lote de Temporada A" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lot-code" class="form-label">Código del Lote (Único)</label>
+                        <input type="text" class="form-control" id="lot-code" placeholder="Ej. LOTE-2026-001" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Crear e Iniciar Lote</button>
+                </form>
+
+                <hr>
+
+                <!-- Selección de Lote Activo -->
+                <div class="mt-4">
+                    <h5 class="text-secondary mb-3">Lotes Recientes</h5>
+                    <div class="list-group" id="lots-list">
+                        <!-- Cargados dinámicamente -->
+                        <div class="text-center text-muted py-3" id="no-lots-msg">
+                            Cargando lotes...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Información del Sistema y Enlaces -->
+        <div class="col-md-6">
+            <div class="card card-soft p-4 h-100">
+                <h3 class="card-title text-success mb-4">ℹ️ Estado e Instrucciones</h3>
+                
+                <div class="mb-4">
+                    <h5>¿Cómo funciona el flujo de trabajo?</h5>
+                    <ol class="text-muted">
+                        <li>Crea un lote arriba o selecciona uno que ya esté configurado.</li>
+                        <li>Abre la <strong>interfaz de cámara</strong> en un teléfono celular montado sobre la caja de iluminación.</li>
+                        <li>Abre el <strong>dashboard de supervisión</strong> en esta computadora.</li>
+                        <li>Conecta los dispositivos a través del mismo código de lote.</li>
+                        <li>El sensor de Arduino detectará el mango, enviará la señal para capturar la foto, el backend clasificará con ConvNeXt-Tiny y enviará la orden serial para separar el mango.</li>
+                    </ol>
+                </div>
+
+                <div class="bg-light p-3 rounded mb-4">
+                    <h6 class="fw-bold mb-2">Configuración Activa de Hardware:</h6>
+                    <ul class="list-unstyled mb-0 text-muted" id="sys-config-info">
+                        <li>Cargando configuración...</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <a href="{% url 'settings' %}" class="btn btn-outline-success w-100">Configuración Global del Sistema</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cargar lotes iniciales
+        loadLots();
+        loadConfig();
+
+        // Manejar envío de formulario de creación de lote
+        document.getElementById('create-lot-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('lot-name').value;
+            const code = document.getElementById('lot-code').value;
+
+            fetch('/api/lots/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    nombre: name,
+                    codigo: code,
+                    estado: 'ACTIVO'
+                })
+            })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw err; });
+                }
+                return res.json();
+            })
+            .then(data => {
+                // Redirigir al dashboard del nuevo lote
+                window.location.href = `/dashboard/${data.codigo}/`;
+            })
+            .catch(err => {
+                alert('Error al crear lote: ' + (err.detail || JSON.stringify(err)));
+            });
+        });
+    });
+
+    function loadLots() {
+        fetch('/api/lots/')
+        .then(res => res.json())
+        .then(data => {
+            const list = document.getElementById('lots-list');
+            const noLotsMsg = document.getElementById('no-lots-msg');
+            
+            if (data.results && data.results.length > 0) {
+                noLotsMsg.style.display = 'none';
+                list.innerHTML = '';
+                data.results.forEach(lot => {
+                    const item = document.createElement('a');
+                    item.href = `/dashboard/${lot.codigo}/`;
+                    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center rounded mb-2 border';
+                    item.innerHTML = `
+                        <div>
+                            <strong class="text-success">${lot.nombre}</strong> <span class="text-muted">(${lot.codigo})</span>
+                        </div>
+                        <span class="badge bg-success rounded-pill">${lot.estado}</span>
+                    `;
+                    list.appendChild(item);
+                });
+            } else {
+                noLotsMsg.innerText = 'No hay lotes registrados. Crea uno arriba.';
+            }
+        })
+        .catch(err => {
+            console.error('Error cargando lotes:', err);
+            document.getElementById('no-lots-msg').innerText = 'Error al cargar lotes.';
+        });
+    }
+
+    function loadConfig() {
+        fetch('/api/hardware/status/')
+        .then(res => res.json())
+        .then(data => {
+            const configInfo = document.getElementById('sys-config-info');
+            if (data.config) {
+                const modeStr = data.config.modo_simulado ? 'Simulado' : 'Físico (Real)';
+                configInfo.innerHTML = `
+                    <li><strong>Puerto Serial:</strong> ${data.config.puerto_serial}</li>
+                    <li><strong>Baudrate:</strong> ${data.config.baudrate} bps</li>
+                    <li><strong>Modo Arduino:</strong> ${modeStr}</li>
+                    <li><strong>Umbral Confianza ML:</strong> ${(data.config.umbral_confianza * 100).toFixed(0)}%</li>
+                `;
+            } else {
+                configInfo.innerHTML = '<li>Error al leer la configuración.</li>';
+            }
+        })
+        .catch(err => {
+            console.error('Error cargando configuración:', err);
+        });
+    }
+</script>
+{% endblock %}

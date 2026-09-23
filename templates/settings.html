@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuración del Sistema - MangoSmart-Sorter{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+    <!-- Encabezado -->
+    <div class="row align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+        <div class="col-8">
+            <h2 class="text-success mb-1">⚙️ Configuración Global</h2>
+            <p class="text-muted mb-0">Parámetros del modelo de ML, puerto serial de Arduino y posiciones del servomotor</p>
+        </div>
+        <div class="col-4 text-end">
+            <a href="{% url 'home' %}" class="btn btn-outline-success">Volver a Inicio</a>
+        </div>
+    </div>
+
+    <!-- Mensajes de Estado -->
+    <div id="settings-alert" class="alert alert-success d-none shadow-sm" role="alert">
+        Configuración guardada exitosamente.
+    </div>
+
+    <!-- Formulario de Configuración -->
+    <div class="card card-soft p-4 mb-4">
+        <form id="settings-form">
+            {% csrf_token %}
+            
+            <!-- Bloque 1: Inteligencia Artificial -->
+            <h5 class="text-success border-bottom pb-2 mb-3">🧠 Modelo de Inteligencia Artificial</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="input-threshold" class="form-label">Umbral de Confianza de Clasificación</label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" min="0.5" max="1.0" class="form-control" id="input-threshold" value="0.80" required>
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <div class="form-text">Si la confianza de predicción es menor a este umbral, el mango se enviará a la categoría "Revisión" automáticamente.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="input-model-mode" class="form-label">Modo de Inferencia</label>
+                    <select id="input-model-mode" class="form-select" disabled>
+                        <option value="mock">Simulado (Mock)</option>
+                        <option value="real">Real (ConvNeXt-Tiny Keras)</option>
+                    </select>
+                    <div class="form-text">Configurado mediante variables de entorno en el servidor (`.env`).</div>
+                </div>
+            </div>
+
+            <!-- Bloque 2: Puerto Serial (Arduino) -->
+            <h5 class="text-success border-bottom pb-2 mb-3">🔌 Comunicación de Hardware (Arduino)</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label for="input-serial-port" class="form-label">Puerto Serial / COM</label>
+                    <input type="text" class="form-control" id="input-serial-port" value="COM3" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="input-baudrate" class="form-label">Baudrate</label>
+                    <select id="input-baudrate" class="form-select">
+                        <option value="9600">9600 bps (Recomendado)</option>
+                        <option value="19200">19200 bps</option>
+                        <option value="38400">38400 bps</option>
+                        <option value="57600">57600 bps</option>
+                        <option value="115200">115200 bps</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="input-arduino-mode" class="form-label">Conexión Física de Arduino</label>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="input-arduino-mode" checked>
+                        <label class="form-check-label" for="input-arduino-mode" id="label-arduino-mode">Modo Simulado (Mock)</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloque 3: Compuerta de Desviación (Servomotor) -->
+            <h5 class="text-success border-bottom pb-2 mb-3">📐 Parámetros de la Compuerta (Servo)</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="input-angle-neutral" class="form-label">Ángulo Neutral</label>
+                    <div class="input-group">
+                        <input type="number" min="0" max="180" class="form-control" id="input-angle-neutral" value="90" required>
+                        <span class="input-group-text">°</span>
+                    </div>
+                    <div class="form-text">Posición de reposo.</div>
+                </div>
+                <div class="col-md-3">
+                    <label for="input-angle-mature" class="form-label">Ángulo Maduro</label>
+                    <div class="input-group">
+                        <input type="number" min="0" max="180" class="form-control" id="input-angle-mature" value="45" required>
+                        <span class="input-group-text">°</span>
+                    </div>
+                    <div class="form-text">Desvío para Maduros.</div>
+                </div>
+                <div class="col-md-3">
+                    <label for="input-angle-immature" class="form-label">Ángulo Inmaduro</label>
+                    <div class="input-group">
+                        <input type="number" min="0" max="180" class="form-control" id="input-angle-immature" value="135" required>
+                        <span class="input-group-text">°</span>
+                    </div>
+                    <div class="form-text">Desvío para Inmaduros.</div>
+                </div>
+                <div class="col-md-3">
+                    <label for="input-gate-time" class="form-label">Tiempo de Compuerta</label>
+                    <div class="input-group">
+                        <input type="number" min="500" max="10000" step="100" class="form-control" id="input-gate-time" value="2000" required>
+                        <span class="input-group-text">ms</span>
+                    </div>
+                    <div class="form-text">Duración de la apertura.</div>
+                </div>
+            </div>
+
+            <!-- Botón de Guardado -->
+            <button type="submit" class="btn btn-success w-100 py-2 fs-5 fw-semibold">💾 Guardar Configuración</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cargar configuración inicial
+        loadConfig();
+
+        // Escuchar switch de modo simulado para cambiar label
+        const simSwitch = document.getElementById('input-arduino-mode');
+        simSwitch.addEventListener('change', function() {
+            document.getElementById('label-arduino-mode').innerText = this.checked ? 'Modo Simulado (Mock)' : 'Modo Físico (Real)';
+        });
+
+        // Guardar configuración al enviar formulario
+        document.getElementById('settings-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const configData = {
+                umbral_confianza: parseFloat(document.getElementById('input-threshold').value),
+                puerto_serial: document.getElementById('input-serial-port').value,
+                baudrate: parseInt(document.getElementById('input-baudrate').value),
+                modo_simulado: document.getElementById('input-arduino-mode').checked,
+                angulo_neutral: parseInt(document.getElementById('input-angle-neutral').value),
+                angulo_maduro: parseInt(document.getElementById('input-angle-mature').value),
+                angulo_inmaduro: parseInt(document.getElementById('input-angle-immature').value),
+                tiempo_compuerta_ms: parseInt(document.getElementById('input-gate-time').value)
+            };
+
+            // Hacer una llamada REST para guardar
+            fetch('/api/hardware/test-command/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    action: 'save_config',
+                    config: configData
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const alertBox = document.getElementById('settings-alert');
+                alertBox.classList.remove('d-none');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => {
+                    alertBox.classList.add('d-none');
+                }, 3000);
+            })
+            .catch(err => {
+                console.error('Error guardando configuración:', err);
+                alert('Error al guardar la configuración.');
+            });
+        });
+    });
+
+    function loadConfig() {
+        fetch('/api/hardware/status/')
+        .then(res => res.json())
+        .then(data => {
+            if (data.config) {
+                document.getElementById('input-threshold').value = data.config.umbral_confianza;
+                document.getElementById('input-serial-port').value = data.config.puerto_serial;
+                document.getElementById('input-baudrate').value = data.config.baudrate;
+                document.getElementById('input-arduino-mode').checked = data.config.modo_simulado;
+                document.getElementById('label-arduino-mode').innerText = data.config.modo_simulado ? 'Modo Simulado (Mock)' : 'Modo Físico (Real)';
+                document.getElementById('input-angle-neutral').value = data.config.angulo_neutral;
+                document.getElementById('input-angle-mature').value = data.config.angulo_maduro;
+                document.getElementById('input-angle-immature').value = data.config.angulo_inmaduro;
+                document.getElementById('input-gate-time').value = data.config.tiempo_compuerta_ms;
+                
+                // Mostrar el modo de inferencia configurado en el servidor
+                document.getElementById('input-model-mode').value = data.ml_mode || 'mock';
+            }
+        })
+        .catch(err => {
+            console.error('Error cargando configuración:', err);
+        });
+    }
+</script>
+{% endblock %}
