@@ -48,9 +48,6 @@ ml_models/*.tflite
 ml_models/*_saved_model/
 ml_models/**/variables/
 
-# Executables and Binaries
-*.exe
-ngrok.exe
 
 # Environment variables
 .env
